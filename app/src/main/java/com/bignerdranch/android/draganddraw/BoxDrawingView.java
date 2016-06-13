@@ -23,7 +23,7 @@ public class BoxDrawingView extends View{
     private Line mCurrentLine;
     private List<Line> mLines = new ArrayList<>();
 
-    private Paint mBoxPaint;
+    private Paint mPaint;
     private Paint mBackgroundPaint;
     private String mMode;
 
@@ -37,8 +37,8 @@ public class BoxDrawingView extends View{
         super(context, attrs);
 
         // Paint the boxes a nice semitransparent red(ARGB)
-        mBoxPaint = new Paint();
-        mBoxPaint.setColor(0x22ff0000);
+        mPaint = new Paint();
+        mPaint.setColor(0x22ff0000);
 
         // Paint the background off-white
         mBackgroundPaint = new Paint();
@@ -119,7 +119,7 @@ public class BoxDrawingView extends View{
             float top = Math.min(box.getOrigin().y, box.getCurrent().y);
             float bottom = Math.max(box.getOrigin().y, box.getCurrent().y);
 
-            canvas.drawRect(left, top, right, bottom, mBoxPaint);
+            canvas.drawRect(left, top, right, bottom, mPaint);
         }
 
         for (Line line: mLines) {
@@ -128,7 +128,7 @@ public class BoxDrawingView extends View{
             float endX = line.getCurrent().x;
             float endY = line.getCurrent().y;
 
-            canvas.drawLine(startX, startY, endX, endY, mBoxPaint);
+            canvas.drawLine(startX, startY, endX, endY, mPaint);
         }
     }
 
