@@ -3,6 +3,7 @@ package com.bignerdranch.android.draganddraw;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Point;
 import android.graphics.PointF;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -22,6 +23,9 @@ public class BoxDrawingView extends View{
 
     private Line mCurrentLine;
     private List<Line> mLines = new ArrayList<>();
+
+    private Paintbrush mCurrentPaintBrush;
+    private List<Paintbrush> mPaintbrushes = new ArrayList<>();
 
     private Paint mPaint;
     private Paint mBackgroundPaint;
@@ -44,7 +48,7 @@ public class BoxDrawingView extends View{
         mBackgroundPaint = new Paint();
         mBackgroundPaint.setColor(0xfff8efe0);
 
-        mMode = "Box";
+        mMode = "Paintbrush";
     }
 
     @Override
@@ -55,6 +59,9 @@ public class BoxDrawingView extends View{
                 break;
             case "Box":
                 handleBoxEvent(event);
+                break;
+            case "Paintbrush":
+                handlePaintbrushEvent(event);
                 break;
         }
         return true;
@@ -108,11 +115,43 @@ public class BoxDrawingView extends View{
         }
     }
 
+    private void handlePaintbrushEvent (MotionEvent event) {
+        PointF current = new PointF(event.getX(), event.getY());
+
+        switch(event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                mCurrentPaintBrush = new Paintbrush(current);
+                mPaintbrushes.add(mCurrentPaintBrush);
+                break;
+            case MotionEvent.ACTION_UP:
+                mCurrentPaintBrush = null;
+                break;
+            case MotionEvent.ACTION_MOVE:
+                if (mCurrentPaintBrush != null) {
+                    mCurrentPaintBrush.addPoint(current);
+                    // Makes the BoxDrawingView invalid again, causing it to redraw itself and its children - calling onDraw
+                    invalidate();
+                }
+                break;
+            case MotionEvent.ACTION_CANCEL:
+                mCurrentPaintBrush = null;
+                break;
+        }
+    }
+
     @Override
     protected void onDraw(Canvas canvas) {
         // Fill the background
         canvas.drawPaint(mBackgroundPaint);
 
+        drawBoxes(canvas);
+
+        drawLines(canvas);
+
+        drawPaintbrushes(canvas);
+    }
+
+    private void drawBoxes(Canvas canvas) {
         for (Box box: mBoxen) {
             float left = Math.min(box.getOrigin().x, box.getCurrent().x);
             float right = Math.max(box.getOrigin().x, box.getCurrent().x);
@@ -121,7 +160,9 @@ public class BoxDrawingView extends View{
 
             canvas.drawRect(left, top, right, bottom, mPaint);
         }
+    }
 
+    private void drawLines(Canvas canvas) {
         for (Line line: mLines) {
             float startX = line.getOrigin().x;
             float startY = line.getOrigin().y;
@@ -129,6 +170,27 @@ public class BoxDrawingView extends View{
             float endY = line.getCurrent().y;
 
             canvas.drawLine(startX, startY, endX, endY, mPaint);
+        }
+    }
+
+    private void drawPaintbrushes(Canvas canvas) {
+        // for each paintbrush made,
+        for (Paintbrush paintbrush : mPaintbrushes) {
+            // get its points
+            List<PointF> paintPoints = paintbrush.getPoints();
+            // set its origin point
+            PointF previous = paintPoints.get(0);
+            // for each of its points,
+            for (int i = 0; i < paintPoints.size(); i++) {
+                // so long as its not the origin point
+                if (i != 0) {
+                    PointF current = paintPoints.get(i);
+                    // draw from previous point
+                    canvas.drawLine(previous.x, previous.y, current.x, current.y, mPaint);
+                    // set a new previous point
+                    previous = current;
+                }
+            }
         }
     }
 
